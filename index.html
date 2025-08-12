@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Netflix Style Movie Search</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #141414;
+        color: #fff;
+        margin: 0;
+        padding: 0;
+    }
+    header {
+        background: #000;
+        padding: 15px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: #e50914;
+        letter-spacing: 2px;
+    }
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+    }
+    .search-bar {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    input {
+        padding: 12px;
+        width: 60%;
+        border-radius: 30px;
+        border: none;
+        font-size: 16px;
+        outline: none;
+    }
+    button {
+        padding: 12px 20px;
+        background: #e50914;
+        border: none;
+        border-radius: 30px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+    button:hover {
+        background: #f40612;
+    }
+    #movieList {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+    .movie-card {
+        background: #1f1f1f;
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .movie-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 10px 20px rgba(0,0,0,0.7);
+    }
+    .movie-card img {
+        width: 100%;
+        height: 270px;
+        object-fit: cover;
+    }
+    .movie-card h3 {
+        padding: 10px;
+        margin: 0;
+        font-size: 16px;
+        text-align: center;
+        background: #000;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 999;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background-color: #1f1f1f;
+        padding: 20px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 800px;
+        color: white;
+        position: relative;
+        display: flex;
+        gap: 20px;
+    }
+    .modal-content img {
+        width: 250px;
+        border-radius: 5px;
+    }
+    .modal-details {
+        flex: 1;
+    }
+    .modal-details h2 {
+        color: #e50914;
+        margin-top: 0;
+    }
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        cursor: pointer;
+        color: #fff;
+    }
+    .close:hover {
+        color: red;
+    }
+</style>
+</head>
+<body>
+
+<header>🎬 Netflix Movie Search</header>
+
+<div class="container">
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search for a movie...">
+        <button id="searchBtn">Search</button>
+    </div>
+    <div id="movieList"></div>
+</div>
+
+
+<script>
+const API_KEY = "e2873ba"; 
+const searchBtn = document.getElementById("searchBtn");
+const searchInput = document.getElementById("searchInput");
+const movieList = document.getElementById("movieList");
+const movieModal = document.getElementById("movieModal");
+const closeModal = document.getElementById("closeModal");
+
+searchBtn.addEventListener("click", () => {
+    let query = searchInput.value.trim();
+    if (query) fetchMovies(query);
+});
+
+
+searchInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        let query = searchInput.value.trim();
+        if (query) fetchMovies(query);
+    }
+});
+
+async function fetchMovies(query) {
+    const url = `https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.Response === "True") {
+        displayMovies(data.Search);
+    } else {
+        movieList.innerHTML = `<p>No movies found!</p>`;
+    }
+}
+
+function displayMovies(movies) {
+    movieList.innerHTML = movies.map(movie => `
+        <div class="movie-card" data-id="${movie.imdbID}">
+            <img src="${movie.Poster !== "N/A" ? movie.Poster : 'https://via.placeholder.com/200'}" alt="${movie.Title}">
+            <h3>${movie.Title}</h3>
+        </div>
+    `).join("");
+
+    document.querySelectorAll(".movie-card").forEach(card => {
+        card.addEventListener("click", () => {
+            let movieId = card.getAttribute("data-id");
+            fetchMovieDetails(movieId);
+        });
+    });
+}
+
+</script>
+
+</body>
+</html>
