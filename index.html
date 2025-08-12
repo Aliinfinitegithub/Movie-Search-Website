@@ -80,6 +80,7 @@
         background: #000;
     }
 
+    /* Modal */
     .modal {
         display: none;
         position: fixed;
@@ -87,7 +88,6 @@
         left: 0; top: 0;
         width: 100%; height: 100%;
         background-color: rgba(0,0,0,0.9);
-        display: flex;
         align-items: center;
         justify-content: center;
     }
@@ -138,20 +138,41 @@
     <div id="movieList"></div>
 </div>
 
+<!-- Modal -->
+<div class="modal" id="movieModal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <img id="modalPoster" src="" alt="">
+        <div class="modal-details">
+            <h2 id="modalTitle"></h2>
+            <p id="modalPlot"></p>
+            <p><strong>Release:</strong> <span id="modalRelease"></span></p>
+            <p><strong>Genre:</strong> <span id="modalGenre"></span></p>
+            <p><strong>IMDB Rating:</strong> <span id="modalRating"></span></p>
+        </div>
+    </div>
+</div>
 
 <script>
 const API_KEY = "e2873ba"; 
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const movieList = document.getElementById("movieList");
+
 const movieModal = document.getElementById("movieModal");
 const closeModal = document.getElementById("closeModal");
+
+const modalPoster = document.getElementById("modalPoster");
+const modalTitle = document.getElementById("modalTitle");
+const modalPlot = document.getElementById("modalPlot");
+const modalRelease = document.getElementById("modalRelease");
+const modalGenre = document.getElementById("modalGenre");
+const modalRating = document.getElementById("modalRating");
 
 searchBtn.addEventListener("click", () => {
     let query = searchInput.value.trim();
     if (query) fetchMovies(query);
 });
-
 
 searchInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
@@ -160,13 +181,23 @@ searchInput.addEventListener("keypress", (e) => {
     }
 });
 
-async function fetchMovies(query) {
-    const url = `https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`;
-    const res = await fetch(url);
-    const data = await res.json();
+// Fetch 30 movies on page load
+window.addEventListener("load", () => {
+    fetchMovies("Avengers", 3); // Default search with 3 pages (10 movies each)
+});
 
-    if (data.Response === "True") {
-        displayMovies(data.Search);
+async function fetchMovies(query, pages = 1) {
+    let movies = [];
+    for (let page = 1; page <= pages; page++) {
+        const url = `https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}&page=${page}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.Response === "True") {
+            movies = movies.concat(data.Search);
+        }
+    }
+    if (movies.length > 0) {
+        displayMovies(movies);
     } else {
         movieList.innerHTML = `<p>No movies found!</p>`;
     }
@@ -188,6 +219,31 @@ function displayMovies(movies) {
     });
 }
 
+async function fetchMovieDetails(id) {
+    const url = `https://www.omdbapi.com/?apikey=${API_KEY}&i=${id}&plot=full`;
+    const res = await fetch(url);
+    const movie = await res.json();
+    if (movie.Response === "True") {
+        modalPoster.src = movie.Poster !== "N/A" ? movie.Poster : 'https://via.placeholder.com/250';
+        modalTitle.textContent = movie.Title;
+        modalPlot.textContent = movie.Plot;
+        modalRelease.textContent = movie.Released;
+        modalGenre.textContent = movie.Genre;
+        modalRating.textContent = movie.imdbRating;
+        movieModal.style.display = "flex";
+    }
+}
+
+// Close modal
+closeModal.addEventListener("click", () => {
+    movieModal.style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target === movieModal) {
+        movieModal.style.display = "none";
+    }
+});
 </script>
 
 </body>
